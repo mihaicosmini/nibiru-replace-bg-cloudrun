@@ -29,6 +29,7 @@ app = FastAPI(title="Miss Galaxia GPU Image Processor")
 model = None
 device = None
 template_img = None
+rembg_session = None
 
 API_BEARER_TOKEN = os.environ.get("API_BEARER_TOKEN")
 
@@ -42,18 +43,25 @@ class ProcessRequest(BaseModel):
 
 @app.on_event("startup")
 def load_resources():
-    global model, device, template_img
+    global model, device, template_img, rembg_session
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Loading BiRefNet-portrait model on device: {device}...")
+    print(f"Detected processing device: {device}")
     
-    model = AutoModelForImageSegmentation.from_pretrained(
-        "ZhengPeng7/BiRefNet-portrait", 
-        trust_remote_code=True
-    )
-    model.to(device)
-    model.eval()
-    print("Model loaded successfully!")
+    if device.type == "cuda":
+        print("Loading BiRefNet-portrait model on device GPU (CUDA)...")
+        model = AutoModelForImageSegmentation.from_pretrained(
+            "ZhengPeng7/BiRefNet-portrait", 
+            trust_remote_code=True
+        )
+        model.to(device)
+        model.eval()
+        print("BiRefNet model loaded successfully on GPU!")
+    else:
+        print("GPU not available. Loading rembg u2net_human_seg session on CPU...")
+        from rembg import new_session
+        rembg_session = new_session("u2net_human_seg")
+        print("Rembg session loaded successfully on CPU!")
     
     print(f"Downloading background poster template from {POSTER_URL}...")
     headers = {
@@ -152,7 +160,12 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
         subject_img = subject_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
     try:
-        cutout = run_birefnet(subject_img)
+        if device.type == "cuda":
+            cutout = run_birefnet(subject_img)
+        else:
+            from rembg import remove
+            print("Running u2net_human_seg on CPU...")
+            cutout = remove(subject_img, session=rembg_session)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Background removal failed: {str(e)}")
 
