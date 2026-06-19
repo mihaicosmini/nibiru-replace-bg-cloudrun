@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
+FROM python:3.10-slim
 
 WORKDIR /app
 
@@ -11,12 +11,7 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-ENV HF_HOME=/app/cache
-RUN mkdir -p /app/cache
-
-RUN python -c "from transformers import AutoModelForImageSegmentation; AutoModelForImageSegmentation.from_pretrained('ZhengPeng7/BiRefNet-portrait', trust_remote_code=True)"
-
-# Pre-download u2net_human_seg ONNX model for CPU fallback
+# Pre-download u2net_human_seg ONNX model for CPU processing
 RUN python -c "from rembg import new_session; new_session('u2net_human_seg')"
 
 COPY . .

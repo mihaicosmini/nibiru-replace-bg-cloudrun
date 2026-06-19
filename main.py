@@ -1,40 +1,19 @@
-import sys
-import types
-from unittest.mock import MagicMock
-
-try:
-    import torchvision
-except ImportError:
-    m = types.ModuleType('torchvision')
-    m.__spec__ = sys.__spec__
-    t = types.ModuleType('torchvision.transforms')
-    t.InterpolationMode = MagicMock()
-    m.transforms = t
-    sys.modules['torchvision'] = m
-    sys.modules['torchvision.transforms'] = t
-
 import os
 import requests
-import torch
-import torch.nn.functional as F
 import numpy as np
 from PIL import Image
 from io import BytesIO
 from fastapi import FastAPI, HTTPException, Response, Header
 from pydantic import BaseModel
-from transformers import AutoModelForImageSegmentation
+from rembg import remove, new_session
 
-app = FastAPI(title="Miss Galaxia GPU Image Processor")
+app = FastAPI(title="Miss Galaxia CPU Image Processor")
 
-model = None
-device = None
 template_img = None
 rembg_session = None
 
 API_BEARER_TOKEN = os.environ.get("API_BEARER_TOKEN")
-
 POSTER_URL = "https://beachpleaseapp.b-cdn.net/site/Galaxia_Colaj_3_4%20(1080x1440).jpg"
-TEMPLATE_PATH = "/tmp/afis-galaxia.jpg"
 
 class ProcessRequest(BaseModel):
     imageUrl: str
@@ -43,25 +22,11 @@ class ProcessRequest(BaseModel):
 
 @app.on_event("startup")
 def load_resources():
-    global model, device, template_img, rembg_session
+    global template_img, rembg_session
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Detected processing device: {device}")
-    
-    if device.type == "cuda":
-        print("Loading BiRefNet-portrait model on device GPU (CUDA)...")
-        model = AutoModelForImageSegmentation.from_pretrained(
-            "ZhengPeng7/BiRefNet-portrait", 
-            trust_remote_code=True
-        )
-        model.to(device)
-        model.eval()
-        print("BiRefNet model loaded successfully on GPU!")
-    else:
-        print("GPU not available. Loading rembg u2net_human_seg session on CPU...")
-        from rembg import new_session
-        rembg_session = new_session("u2net_human_seg")
-        print("Rembg session loaded successfully on CPU!")
+    print("Loading rembg u2net_human_seg session on CPU...")
+    rembg_session = new_session("u2net_human_seg")
+    print("Rembg session loaded successfully!")
     
     print(f"Downloading background poster template from {POSTER_URL}...")
     headers = {
@@ -80,47 +45,15 @@ def load_resources():
 @app.get("/")
 @app.get("/health")
 def health_check():
-    has_gpu = torch.cuda.is_available()
-    device_name = torch.cuda.get_device_name(0) if has_gpu else "CPU"
     return {
         "status": "ok",
-        "device": str(device),
-        "gpu_available": has_gpu,
-        "gpu_name": device_name,
+        "device": "CPU",
         "template_loaded": template_img is not None
     }
 
-def run_birefnet(subject_img):
-    orig_im = subject_img.convert("RGB")
-    w, h = orig_im.size
-    
-    im_resize = orig_im.resize((1024, 1024), Image.Resampling.LANCZOS)
-    im_data = np.array(im_resize)
-    
-    im_tensor = torch.tensor(im_data, dtype=torch.float32).permute(2, 0, 1) / 255.0
-    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
-    im_tensor = (im_tensor - mean) / std
-    im_tensor = im_tensor.unsqueeze(0).to(device)
-    
-    with torch.no_grad():
-        preds = model(im_tensor)
-        if isinstance(preds, (list, tuple)):
-            pred_tensor = preds[-1]
-        else:
-            pred_tensor = preds
-        pred_tensor = pred_tensor.sigmoid().squeeze().cpu().numpy()
-        
-    mask_data = (pred_tensor * 255).astype(np.uint8)
-    mask_img = Image.fromarray(mask_data).resize((w, h), Image.Resampling.BILINEAR)
-    
-    cutout = Image.new("RGBA", (w, h))
-    cutout.paste(orig_im, (0, 0), mask=mask_img)
-    return cutout
-
 @app.post("/process")
 def process_image(request: ProcessRequest, authorization: str = Header(None)):
-    global template_img
+    global template_img, rembg_session
     
     if API_BEARER_TOKEN:
         if not authorization or authorization != f"Bearer {API_BEARER_TOKEN}":
@@ -160,12 +93,8 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
         subject_img = subject_img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
     try:
-        if device.type == "cuda":
-            cutout = run_birefnet(subject_img)
-        else:
-            from rembg import remove
-            print("Running u2net_human_seg on CPU...")
-            cutout = remove(subject_img, session=rembg_session)
+        print("Running u2net_human_seg on CPU...")
+        cutout = remove(subject_img, session=rembg_session)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Background removal failed: {str(e)}")
 
