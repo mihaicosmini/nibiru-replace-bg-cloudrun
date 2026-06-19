@@ -20,7 +20,7 @@ import torch.nn.functional as F
 import numpy as np
 from PIL import Image
 from io import BytesIO
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Header
 from pydantic import BaseModel
 from transformers import AutoModelForImageSegmentation
 
@@ -29,6 +29,8 @@ app = FastAPI(title="Miss Galaxia GPU Image Processor")
 model = None
 device = None
 template_img = None
+
+API_BEARER_TOKEN = os.environ.get("API_BEARER_TOKEN")
 
 POSTER_URL = "https://beachpleaseapp.b-cdn.net/site/Galaxia_Colaj_3_4%20(1080x1440).jpg"
 TEMPLATE_PATH = "/tmp/afis-galaxia.jpg"
@@ -109,8 +111,12 @@ def run_birefnet(subject_img):
     return cutout
 
 @app.post("/process")
-def process_image(request: ProcessRequest):
+def process_image(request: ProcessRequest, authorization: str = Header(None)):
     global template_img
+    
+    if API_BEARER_TOKEN:
+        if not authorization or authorization != f"Bearer {API_BEARER_TOKEN}":
+            raise HTTPException(status_code=401, detail="Unauthorized")
     
     if template_img is None:
         try:
