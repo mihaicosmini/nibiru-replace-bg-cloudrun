@@ -1,7 +1,7 @@
 import os
 import requests
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from io import BytesIO
 from fastapi import FastAPI, HTTPException, Response, Header
 from pydantic import BaseModel
@@ -16,7 +16,7 @@ POSTER_URL = "https://beachpleaseapp.b-cdn.net/miss-galaxia/template.webp"
 class ProcessRequest(BaseModel):
     imageUrl: str
     scale: float = 0.7
-    quality: int = 85
+    quality: int = 100
     instagramHandle: str = None
 
 @app.on_event("startup")
@@ -127,7 +127,14 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
         
         print("Successfully retrieved cutout from Cloudflare!")
         cutout = Image.open(BytesIO(cf_res.content)).convert("RGBA")
-        subject_img = cutout
+        
+        # Apply High-Key Beach Relighting (V4)
+        r, g, b, a = cutout.split()
+        r_new = r.point(lambda i: min(255, int(i * 1.05)))
+        b_new = b.point(lambda i: int(i * 0.96))
+        warmed = Image.merge("RGBA", (r_new, g, b_new, a))
+        contrast = ImageEnhance.Contrast(warmed).enhance(1.15)
+        subject_img = ImageEnhance.Brightness(contrast).enhance(1.08)
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
