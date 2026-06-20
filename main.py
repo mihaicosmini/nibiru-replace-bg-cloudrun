@@ -60,7 +60,8 @@ def health_check():
     return {
         "status": "ok",
         "device": "CPU",
-        "template_loaded": template_img is not None
+        "template_loaded": template_img is not None,
+        "version": "v1.1.0-local-template"
     }
 
 @app.post("/process")
