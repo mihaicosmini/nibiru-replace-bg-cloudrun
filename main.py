@@ -55,7 +55,7 @@ def health_check():
         "status": "ok",
         "device": "CPU",
         "template_loaded": template_img is not None,
-        "version": "mutat pe cloudflare"
+        "version": "cfv2"
     }
 
 def apply_edge_fade(img, left_fade=False, right_fade=False, fade_percentage=0.04):
@@ -278,34 +278,14 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
         font_path = os.path.join(font_dir, "SparTakus Round.ttf")
         
         if os.path.exists(font_path):
-            # Draw Footer Line A: GET YOUR TICKETS NOW (size 24 at 123px from bottom)
-            text_a = "GET YOUR TICKETS NOW"
-            font_a = ImageFont.truetype(font_path, 24)
-            bbox_a = draw.textbbox((0, 0), text_a, font=font_a)
-            w_a = bbox_a[2] - bbox_a[0]
-            h_a = bbox_a[3] - bbox_a[1]
-            x_a = (bg_w - w_a) // 2
-            y_a = bg_h - 123 - h_a
-            draw.text((x_a, y_a), text_a, font=font_a, fill=(255, 255, 255))
-            
-            # Draw Footer Line B: NIBIRU.NET/GALAXIA (size 40 at 75px from bottom)
-            text_b = "NIBIRU.NET/GALAXIA"
-            font_b = ImageFont.truetype(font_path, 40)
-            bbox_b = draw.textbbox((0, 0), text_b, font=font_b)
-            w_b = bbox_b[2] - bbox_b[0]
-            h_b = bbox_b[3] - bbox_b[1]
-            x_b = (bg_w - w_b) // 2
-            y_b = bg_h - 75 - h_b
-            draw.text((x_b, y_b), text_b, font=font_b, fill=(255, 255, 255))
-            
             # Draw dynamic instagram handle
             if request.instagramHandle:
                 # Text 1: MISS & MISTER GALAXIA
                 text1 = "MISS & MISTER GALAXIA"
                 font1 = ImageFont.truetype(font_path, 35)
                 
-                # Draw at 318px from bottom (y = 1440 - 318 = 1122)
-                y1 = bg_h - 318
+                # Draw at 230px from bottom (y = 1440 - 230 = 1210)
+                y1 = bg_h - 230
                 bbox1 = draw.textbbox((0, 0), text1, font=font1)
                 text1_w = bbox1[2] - bbox1[0]
                 text1_h = bbox1[3] - bbox1[1]
