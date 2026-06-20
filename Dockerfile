@@ -11,9 +11,6 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download u2net_human_seg ONNX model for CPU processing
-RUN python -c "from rembg import new_session; new_session('u2net_human_seg')"
-
 COPY . .
 
 ENV PORT=8080
