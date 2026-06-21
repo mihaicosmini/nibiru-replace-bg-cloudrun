@@ -287,8 +287,8 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
         font_path = os.path.join(font_dir, "SparTakus Round.ttf")
         
         if os.path.exists(font_path):
-            # Draw dynamic instagram handle / stage name
-            if request.instagramHandle or request.stageName:
+            # Draw dynamic stage name
+            if request.stageName:
                 # Text 1: MISS GALAXIA or MISTER GALAXIA
                 if request.candidateType and request.candidateType.lower() == "mister":
                     text1 = "MISTER GALAXIA"
@@ -305,12 +305,8 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 
                 draw.text((x1, y1), text1, font=font1, fill=(255, 255, 255))
                 
-                # Text 2: Stage Name / Instagram Handle
-                display_username = ""
-                if request.stageName:
-                    display_username = request.stageName.strip()
-                elif request.instagramHandle:
-                    display_username = request.instagramHandle.strip().lstrip("@")
+                # Text 2: Stage Name
+                display_username = request.stageName.strip() if request.stageName else ""
                 
                 username_len = len(display_username)
                 if username_len <= 12:
