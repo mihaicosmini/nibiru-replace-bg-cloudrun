@@ -18,6 +18,8 @@ class ProcessRequest(BaseModel):
     scale: float = 0.7
     quality: int = 100
     instagramHandle: str = None
+    candidateType: str = "miss"
+    stageName: str = None
 
 @app.on_event("startup")
 def load_resources():
@@ -285,10 +287,13 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
         font_path = os.path.join(font_dir, "SparTakus Round.ttf")
         
         if os.path.exists(font_path):
-            # Draw dynamic instagram handle
-            if request.instagramHandle:
-                # Text 1: MISS & MISTER GALAXIA
-                text1 = "MISS & MISTER GALAXIA"
+            # Draw dynamic instagram handle / stage name
+            if request.instagramHandle or request.stageName:
+                # Text 1: MISS GALAXIA or MISTER GALAXIA
+                if request.candidateType and request.candidateType.lower() == "mister":
+                    text1 = "MISTER GALAXIA"
+                else:
+                    text1 = "MISS GALAXIA"
                 font1 = ImageFont.truetype(font_path, 35)
                 
                 # Draw at 230px from bottom (y = 1440 - 230 = 1210)
@@ -300,11 +305,14 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 
                 draw.text((x1, y1), text1, font=font1, fill=(255, 255, 255))
                 
-                # Text 2: Instagram Username
-                raw_username = request.instagramHandle.strip().lstrip("@")
-                display_username = raw_username
+                # Text 2: Stage Name / Instagram Handle
+                display_username = ""
+                if request.stageName:
+                    display_username = request.stageName.strip()
+                elif request.instagramHandle:
+                    display_username = request.instagramHandle.strip().lstrip("@")
                 
-                username_len = len(raw_username)
+                username_len = len(display_username)
                 if username_len <= 12:
                     font_size = 99
                 else:
@@ -330,7 +338,7 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 y2 = y1 + text1_h + gap
                 
                 draw.text((x2, y2), display_username, font=font2, fill=(255, 255, 255))
-                print(f"Drew instagram handle: {display_username} (size {font_size})")
+                print(f"Drew display name: {display_username} ({text1}) (size {font_size})")
         else:
             print(f"Warning: Font file not found at {font_path}. Skipping text overlays.")
     except Exception as e:
