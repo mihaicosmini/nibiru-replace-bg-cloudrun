@@ -146,7 +146,7 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
     if not bbox:
         raise HTTPException(status_code=400, detail="No subject detected in the image.")
     
-    cropped_cutout = cutout.crop(bbox)
+    cropped_cutout = subject_img.crop(bbox)
     c_w, c_h = cropped_cutout.size
     aspect_ratio = c_w / c_h
 
