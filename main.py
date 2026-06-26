@@ -57,7 +57,7 @@ def health_check():
         "status": "ok",
         "device": "CPU",
         "template_loaded": template_img is not None,
-        "version": "cfv2-hq"
+        "version": "cfv2-hq2"
     }
 
 def apply_edge_fade(img, left_fade=False, right_fade=False, fade_percentage=0.04):
@@ -119,7 +119,7 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
     # Request segmented cutout from Cloudflare Images
     try:
         print(f"Requesting Cloudflare background removal for: {request.imageUrl}")
-        cf_url = f"https://cazare-beach-please.ro/cdn-cgi/image/width=2048,height=2048,fit=scale-down,segment=foreground/{request.imageUrl}"
+        cf_url = f"https://cazare-beach-please.ro/cdn-cgi/image/width=2048,height=2048,fit=scale-down,quality=100,format=png,segment=foreground/{request.imageUrl}"
         cf_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
