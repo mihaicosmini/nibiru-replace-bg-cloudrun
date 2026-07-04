@@ -350,43 +350,45 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 
                 draw.text((x3, y3), text3, font=font3, fill=(255, 160, 209)) # Using the #FFA0D1 pink color
                 
-                # Text 4 & 5: Votează-mă aici + Link
-                if not request.noLink:
+                # Text 4 & 5: Votează-mă aici + Link OR Înscrie-te
+                if request.noLink:
+                    text4 = "INSCRIE-TE SI TU AICI:"
+                    text5 = "MISS-GALAXIA.NIBIRU.NET"
+                else:
                     text4 = "VOTEAZA-MA AICI:"
-                    font4 = ImageFont.truetype(font_path, 22)
-                    bbox4 = draw.textbbox((0, 0), text4, font=font4)
-                    text4_w = bbox4[2] - bbox4[0]
-                    text4_h = bbox4[3] - bbox4[1]
-                    x4 = (bg_w - text4_w) // 2
-                    y4 = y3 + text3_h + 15
-                    
-                    draw.text((x4, y4), text4, font=font4, fill=(255, 255, 255))
-                    
-                    # Text 5: Link
                     if request.instagramHandle:
                         user_handle = request.instagramHandle.strip().replace('@', '')
                     else:
                         user_handle = request.stageName.strip().replace(' ', '').lower() if request.stageName else ""
-                        
                     text5 = f"MISS-MISTER-GALAXIA.NIBIRU.NET/VOTE/{user_handle.upper()}"
-                    
-                    font_size_5 = 22
+
+                font4 = ImageFont.truetype(font_path, 22)
+                bbox4 = draw.textbbox((0, 0), text4, font=font4)
+                text4_w = bbox4[2] - bbox4[0]
+                text4_h = bbox4[3] - bbox4[1]
+                x4 = (bg_w - text4_w) // 2
+                y4 = y3 + text3_h + 15
+                
+                draw.text((x4, y4), text4, font=font4, fill=(255, 255, 255))
+                
+                # Text 5: Link
+                font_size_5 = 22
+                font5 = ImageFont.truetype(font_path, font_size_5)
+                bbox5 = draw.textbbox((0, 0), text5, font=font5)
+                text5_w = bbox5[2] - bbox5[0]
+                
+                # Scale down if it exceeds 1020px width
+                max_text5_width = 1020
+                while text5_w > max_text5_width and font_size_5 > 10:
+                    font_size_5 -= 1
                     font5 = ImageFont.truetype(font_path, font_size_5)
                     bbox5 = draw.textbbox((0, 0), text5, font=font5)
                     text5_w = bbox5[2] - bbox5[0]
                     
-                    # Scale down if it exceeds 1020px width
-                    max_text5_width = 1020
-                    while text5_w > max_text5_width and font_size_5 > 10:
-                        font_size_5 -= 1
-                        font5 = ImageFont.truetype(font_path, font_size_5)
-                        bbox5 = draw.textbbox((0, 0), text5, font=font5)
-                        text5_w = bbox5[2] - bbox5[0]
-                        
-                    x5 = (bg_w - text5_w) // 2
-                    y5 = y4 + text4_h + 8
-                    
-                    draw.text((x5, y5), text5, font=font5, fill=(255, 255, 255))
+                x5 = (bg_w - text5_w) // 2
+                y5 = y4 + text4_h + 8
+                
+                draw.text((x5, y5), text5, font=font5, fill=(255, 255, 255))
         else:
             print(f"Warning: Font file not found at {font_path}. Skipping text overlays.")
     except Exception as e:
