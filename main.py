@@ -17,6 +17,7 @@ class ProcessRequest(BaseModel):
     imageUrl: str
     scale: float = 0.7
     quality: int = 100
+    instagram: str = None
     instagramHandle: str = None
     candidateType: str = "miss"
     stageName: str = None
@@ -373,14 +374,15 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                     candidate_type = request.candidateType or "miss"
                     base_domain = "MISTER-GALAXIA.NIBIRU.NET" if candidate_type.lower() == "mister" else "MISS-GALAXIA.NIBIRU.NET"
                     
-                    is_admin_flow = (request.instagramHandle and request.instagramHandle.upper() == "BYPASS") or not request.instagramHandle
+                    handle = request.instagram or request.instagramHandle
+                    is_admin_flow = (handle and handle.upper() == "BYPASS") or not handle
                     
                     if is_admin_flow:
                         text4 = "INSCRIE-TE SI TU AICI:"
                         text5 = base_domain
                     else:
                         text4 = "VOTEAZA-MA AICI:"
-                        user_handle = request.instagramHandle.strip().replace('@', '')
+                        user_handle = handle.strip().replace('@', '')
                         text5 = f"{base_domain}/VOTE/{user_handle.upper()}"
 
                     # Draw Label (Text 4)
