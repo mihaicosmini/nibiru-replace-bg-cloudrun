@@ -339,8 +339,26 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 draw.text((x2, y2), display_username, font=font2, fill=(255, 255, 255))
                 print(f"Drew display name: {display_username} ({text1}) (size {font_size})")
 
-                # Text 3: Prețurile cresc pe 6 iulie! (Fără diacritice)
-                text3 = "PRETURILE CRESC PE 6 IULIE!"
+                # Text 3: Dynamic Price increase notice
+                from datetime import datetime
+                import pytz
+                
+                try:
+                    tz = pytz.timezone('Europe/Bucharest')
+                    now = datetime.now(tz)
+                except:
+                    now = datetime.now() # Fallback
+
+                if now.year == 2026 and now.month == 7:
+                    # Logic requested: 4th and 5th say "MAINE", 6th+ says "ASTAZI"
+                    if now.day <= 5:
+                        text3 = "PRETURILE CRESC MAINE!"
+                    else:
+                        text3 = "PRETURILE CRESC ASTAZI!"
+                else:
+                    # Default for other months/years if any
+                    text3 = "PRETURILE CRESC MAINE!"
+
                 font3 = ImageFont.truetype(font_path, 32)
                 bbox3 = draw.textbbox((0, 0), text3, font=font3)
                 text3_w = bbox3[2] - bbox3[0]
