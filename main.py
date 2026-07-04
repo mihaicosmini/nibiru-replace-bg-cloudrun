@@ -20,6 +20,7 @@ class ProcessRequest(BaseModel):
     instagramHandle: str = None
     candidateType: str = "miss"
     stageName: str = None
+    noLink: bool = False
 
 @app.on_event("startup")
 def load_resources():
@@ -331,10 +332,63 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 
                 # Calculate gap dynamically based on font size to align visual centers
                 gap = int(71 - 0.5 * font_size)
+                
+                # Shift everything up by 90px to make room for new text
+                y1 = y1 - 90
                 y2 = y1 + text1_h + gap
                 
+                draw.text((x1, y1), text1, font=font1, fill=(255, 255, 255))
                 draw.text((x2, y2), display_username, font=font2, fill=(255, 255, 255))
                 print(f"Drew display name: {display_username} ({text1}) (size {font_size})")
+
+                # Text 3: Prețurile cresc pe 6 iulie! (Fără diacritice)
+                text3 = "PRETURILE CRESC PE 6 IULIE!"
+                font3 = ImageFont.truetype(font_path, 32)
+                bbox3 = draw.textbbox((0, 0), text3, font=font3)
+                text3_w = bbox3[2] - bbox3[0]
+                text3_h = bbox3[3] - bbox3[1]
+                x3 = (bg_w - text3_w) // 2
+                y3 = y2 + text2_h + 30
+                
+                draw.text((x3, y3), text3, font=font3, fill=(255, 160, 209)) # Using the #FFA0D1 pink color
+                
+                # Text 4 & 5: Votează-mă aici + Link
+                if not request.noLink:
+                    text4 = "VOTEAZA-MA AICI:"
+                    font4 = ImageFont.truetype(font_path, 22)
+                    bbox4 = draw.textbbox((0, 0), text4, font=font4)
+                    text4_w = bbox4[2] - bbox4[0]
+                    text4_h = bbox4[3] - bbox4[1]
+                    x4 = (bg_w - text4_w) // 2
+                    y4 = y3 + text3_h + 15
+                    
+                    draw.text((x4, y4), text4, font=font4, fill=(255, 255, 255))
+                    
+                    # Text 5: Link
+                    if request.instagramHandle:
+                        user_handle = request.instagramHandle.strip().replace('@', '')
+                    else:
+                        user_handle = request.stageName.strip().replace(' ', '').lower() if request.stageName else ""
+                        
+                    text5 = f"MISS-MISTER-GALAXIA.NIBIRU.NET/VOTE/{user_handle.upper()}"
+                    
+                    font_size_5 = 22
+                    font5 = ImageFont.truetype(font_path, font_size_5)
+                    bbox5 = draw.textbbox((0, 0), text5, font=font5)
+                    text5_w = bbox5[2] - bbox5[0]
+                    
+                    # Scale down if it exceeds 1020px width
+                    max_text5_width = 1020
+                    while text5_w > max_text5_width and font_size_5 > 10:
+                        font_size_5 -= 1
+                        font5 = ImageFont.truetype(font_path, font_size_5)
+                        bbox5 = draw.textbbox((0, 0), text5, font=font5)
+                        text5_w = bbox5[2] - bbox5[0]
+                        
+                    x5 = (bg_w - text5_w) // 2
+                    y5 = y4 + text4_h + 8
+                    
+                    draw.text((x5, y5), text5, font=font5, fill=(255, 255, 255))
         else:
             print(f"Warning: Font file not found at {font_path}. Skipping text overlays.")
     except Exception as e:
