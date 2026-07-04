@@ -304,8 +304,6 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 text1_h = bbox1[3] - bbox1[1]
                 x1 = (bg_w - text1_w) // 2
                 
-                draw.text((x1, y1), text1, font=font1, fill=(255, 255, 255))
-                
                 # Text 2: Stage Name
                 display_username = request.stageName.strip() if request.stageName else ""
                 
