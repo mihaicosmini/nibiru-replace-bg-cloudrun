@@ -12,6 +12,7 @@ template_img = None
 
 API_BEARER_TOKEN = os.environ.get("API_BEARER_TOKEN")
 POSTER_URL = "https://beachpleaseapp.b-cdn.net/miss-galaxia/template.webp"
+FONT_URL = "https://beachpleaseapp.b-cdn.net/miss-galaxia/fonts/SparTakus-Round-Fixed.ttf"
 
 class ProcessRequest(BaseModel):
     imageUrl: str
@@ -51,6 +52,21 @@ def load_resources():
             print(f"Warning: Failed to fetch template. Status: {response.status_code}")
     except Exception as e:
         print(f"Warning: Exception fetching template on startup: {e}")
+
+    # --- FONT LOADING ---
+    local_font_path = os.path.join(os.path.dirname(__file__), "SparTakus Round.ttf")
+    if not os.path.exists(local_font_path):
+        print(f"Font missing locally. Downloading from {FONT_URL}...")
+        try:
+            res = requests.get(FONT_URL, timeout=15)
+            if res.status_code == 200:
+                with open(local_font_path, "wb") as f:
+                    f.write(res.content)
+                print("Font downloaded successfully.")
+            else:
+                print(f"Warning: Failed to download font. Status: {res.status_code}")
+        except Exception as e:
+            print(f"Warning: Exception downloading font: {e}")
 
 @app.get("/")
 @app.get("/health")
@@ -353,12 +369,12 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 if now.year == 2026 and now.month == 7:
                     # Logic requested: 4th and 5th say "MAINE", 6th+ says "ASTAZI"
                     if now.day <= 5:
-                        text3 = "PRETURILE CRESC MAINE!"
+                        text3 = "PREȚURILE CRESC MÂINE!"
                     else:
-                        text3 = "PRETURILE CRESC ASTAZI!"
+                        text3 = "PREȚURILE CRESC ASTĂZI!"
                 else:
                     # Default for other months/years if any
-                    text3 = "PRETURILE CRESC MAINE!"
+                    text3 = "PREȚURILE CRESC MÂINE!"
 
                 font3 = ImageFont.truetype(font_path, 32)
                 bbox3 = draw.textbbox((0, 0), text3, font=font3)
@@ -378,11 +394,16 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                     is_admin_flow = (handle and handle.upper() == "BYPASS") or not handle
                     
                     if is_admin_flow:
-                        text4 = "INSCRIE-TE SI TU AICI:"
+                        text4 = "ÎNSCRIE-TE ȘI TU AICI:"
                         text5 = base_domain
                     else:
+<<<<<<< HEAD
+                        text4 = "VOTEAZĂ-MĂ AICI:"
+                        user_handle = request.instagramHandle.strip().replace('@', '')
+=======
                         text4 = "VOTEAZA-MA AICI:"
                         user_handle = handle.strip().replace('@', '')
+>>>>>>> d5190e9252c9a9eec1d755798e2746040c8e77ff
                         text5 = f"{base_domain}/VOTE/{user_handle.upper()}"
 
                     # Draw Label (Text 4)
