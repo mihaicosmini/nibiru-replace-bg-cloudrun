@@ -11,7 +11,7 @@ app = FastAPI(title="Miss Galaxia Cloudflare Image Processor")
 template_img = None
 
 API_BEARER_TOKEN = os.environ.get("API_BEARER_TOKEN")
-POSTER_URL = "https://beachpleaseapp.b-cdn.net/miss-galaxia/template.webp"
+POSTER_URL = "https://beachpleaseapp.b-cdn.net/miss-galaxia/CORECTA.png"
 FONT_URL = "https://beachpleaseapp.b-cdn.net/miss-galaxia/fonts/SparTakus-Round-Fixed.ttf"
 
 class ProcessRequest(BaseModel):
@@ -397,13 +397,8 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                         text4 = "ÎNSCRIE-TE ȘI TU AICI:"
                         text5 = base_domain
                     else:
-<<<<<<< HEAD
-                        text4 = "VOTEAZĂ-MĂ AICI:"
-                        user_handle = request.instagramHandle.strip().replace('@', '')
-=======
                         text4 = "VOTEAZA-MA AICI:"
                         user_handle = handle.strip().replace('@', '')
->>>>>>> d5190e9252c9a9eec1d755798e2746040c8e77ff
                         text5 = f"{base_domain}/VOTE/{user_handle.upper()}"
 
                     # Draw Label (Text 4)
