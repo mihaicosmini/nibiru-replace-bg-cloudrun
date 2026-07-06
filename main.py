@@ -366,15 +366,7 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 except:
                     now = datetime.now() # Fallback
 
-                if now.year == 2026 and now.month == 7:
-                    # Logic requested: 4th and 5th say "MAINE", 6th+ says "ASTAZI"
-                    if now.day <= 5:
-                        text3 = "PREȚURILE CRESC MÂINE!"
-                    else:
-                        text3 = "PREȚURILE CRESC ASTĂZI!"
-                else:
-                    # Default for other months/years if any
-                    text3 = "PREȚURILE CRESC MÂINE!"
+                text3 = "PREȚURILE CRESC ASTĂZI!"
 
                 font3 = ImageFont.truetype(font_path, 32)
                 bbox3 = draw.textbbox((0, 0), text3, font=font3)
