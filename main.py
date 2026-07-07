@@ -142,7 +142,6 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
         cf_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        
         max_retries = 5
         retry_delay = 1.5
         for attempt in range(max_retries):
