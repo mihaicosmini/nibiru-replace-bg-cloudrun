@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageEnhance
@@ -141,9 +142,22 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
         cf_headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        cf_res = requests.get(cf_url, headers=cf_headers, timeout=20)
-        if cf_res.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Cloudflare background removal failed with status {cf_res.status_code}")
+        
+        max_retries = 5
+        retry_delay = 1.5
+        for attempt in range(max_retries):
+            cf_res = requests.get(cf_url, headers=cf_headers, timeout=20)
+            if cf_res.status_code == 200:
+                break
+            elif cf_res.status_code == 429:
+                if attempt < max_retries - 1:
+                    print(f"Cloudflare rate limit (429) hit. Retrying in {retry_delay}s... (Attempt {attempt+1}/{max_retries})")
+                    time.sleep(retry_delay)
+                    retry_delay *= 1.5  # Exponential backoff
+                else:
+                    raise HTTPException(status_code=500, detail=f"Cloudflare background removal failed with status {cf_res.status_code} after {max_retries} attempts")
+            else:
+                raise HTTPException(status_code=500, detail=f"Cloudflare background removal failed with status {cf_res.status_code}")
         
         print("Successfully retrieved cutout from Cloudflare!")
         cutout = Image.open(BytesIO(cf_res.content)).convert("RGBA")
