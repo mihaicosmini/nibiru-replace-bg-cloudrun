@@ -379,7 +379,7 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
                 except:
                     now = datetime.now() # Fallback
 
-                text3 = "PREȚURILE CRESC ASTĂZI!"
+                text3 = "PREȚURILE CRESC"
 
                 font3 = ImageFont.truetype(font_path, 32)
                 bbox3 = draw.textbbox((0, 0), text3, font=font3)
