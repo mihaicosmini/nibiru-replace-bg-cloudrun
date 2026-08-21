@@ -76,7 +76,7 @@ def health_check():
         "status": "ok",
         "device": "CPU",
         "template_loaded": template_img is not None,
-        "version": "cfv2-hq2"
+        "version": "cfv2-hq3-vhs-yunet"
     }
 
 def apply_edge_fade(img, left_fade=False, right_fade=False, fade_percentage=0.04):
@@ -461,26 +461,41 @@ class RetrogradProcessRequest(BaseModel):
 
 RETROGRAD_FILTERS = {
     "00_original_no_filter": None,
-    "01_xenon_flash_crisp": "unsharp=5:5:1.2:3:3:0.0,eq=contrast=1.12:saturation=1.15:brightness=0.02",
-    "02_subtle_crt_phosphor": "eq=contrast=1.14:saturation=1.18,drawgrid=w=1053:h=3:t=1:c=black@0.15,unsharp=5:5:0.9",
-    "03_panasonic_lumix_leica": "eq=contrast=1.20:saturation=1.15,unsharp=7:7:1.3:3:3:0.0",
-    "04_soft_flash_glamour": "split[a][b];[b]gblur=sigma=5,eq=brightness=0.04[gl];[a][gl]blend=all_mode=lighten:all_opacity=0.25,eq=contrast=1.12:saturation=1.16,unsharp=3:3:0.7",
-    "05_party_flash_vignette": "eq=contrast=1.18:saturation=1.22:brightness=0.02,vignette=PI/5,unsharp=5:5:1.0",
-    "06_webcam_ccd_nostalgia": "scale=640:480,scale=1053:758:flags=bicubic,eq=contrast=1.15:saturation=1.16,unsharp=5:5:1.3",
-    "07_sony_cybershot_2004": "eq=contrast=1.16:saturation=1.22:brightness=0.01,unsharp=7:7:1.0:3:3:0.0",
-    "08_minidv_clean_tape": "eq=contrast=1.12:saturation=1.16:brightness=0.01,noise=alls=4:allf=t+u,unsharp=5:5:1.0",
-    "09_canon_powershot_g3": "curves=master='0/0 0.25/0.22 0.75/0.82 1/1',eq=contrast=1.10:saturation=1.18,unsharp=5:5:0.8",
-    "10_early_digicam_vivid": "eq=contrast=1.20:saturation=1.28:brightness=0.02,unsharp=5:5:1.4",
-    "11_direct_flash_pop": "curves=master='0/0.02 0.3/0.26 0.7/0.78 1/1',eq=contrast=1.15:saturation=1.12:brightness=0.03,unsharp=3:3:0.9",
-    "12_clean_digital_480p": "scale=702:505,scale=1053:758:flags=lanczos,eq=contrast=1.14:saturation=1.18,unsharp=5:5:1.5",
-    "13_casio_exilim_color_pop": "eq=contrast=1.18:saturation=1.32,unsharp=5:5:1.0",
-    "14_olympus_camedia_crisp": "curves=master='0/0 0.5/0.52 1/1',eq=contrast=1.12:saturation=1.15,unsharp=7:7:1.2",
-    "15_flash_contrast_boost": "eq=contrast=1.22:brightness=-0.01:saturation=1.20,unsharp=5:5:1.1",
-    "16_kodak_easyshare_digital": "curves=master='0/0 0.25/0.24 0.75/0.80 1/1',eq=contrast=1.15:saturation=1.25,unsharp=3:3:0.8",
-    "17_nikon_coolpix_2003": "eq=contrast=1.14:saturation=1.12:brightness=0.01,curves=master='0/0 0.5/0.51 1/0.99',unsharp=5:5:1.0",
-    "18_fujifilm_finepix_superccd": "curves=master='0/0.01 0.25/0.23 0.75/0.83 1/1',eq=contrast=1.15:saturation=1.24,unsharp=5:5:1.1",
-    "19_direct_flash_high_key": "curves=master='0/0.03 0.3/0.32 0.7/0.84 1/1',eq=contrast=1.12:saturation=1.14:brightness=0.02,unsharp=3:3:0.8",
-    "20_y2k_cyber_clean": "colorchannelmixer=rr=1.02:gg=1.0:bb=1.04,eq=contrast=1.16:saturation=1.20:brightness=0.01,unsharp=5:5:1.2",
+    "01_vhs_camcorder_1988": "scale=690:497:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=6:cp=1,format=rgb24,rgbashift=rh=-3:bh=3,curves=master='0/0.07 0.5/0.51 1/0.94',eq=saturation=1.08:contrast=1.06,noise=alls=11:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "02_vhs_slp_worn_tape": "scale=520:374:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=6:cp=1,format=rgb24,rgbashift=rh=-4:bh=4,curves=master='0/0.10 0.5/0.50 1/0.90',eq=saturation=0.82:brightness=0.02,noise=alls=20:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "03_vhs_pastel_dream": "scale=690:497:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=6:cp=1,format=rgb24,curves=master='0/0.12 0.5/0.55 1/0.92',eq=saturation=0.72:brightness=0.05,colorbalance=rm=0.06:bm=0.08,split[__a][__b];[__b]gblur=sigma=9[__gl];[__a][__gl]blend=all_mode=screen:all_opacity=0.32,noise=alls=11:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "04_camcorder_night": "scale=690:497:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=6:cp=1,format=rgb24,eq=brightness=-0.04:saturation=0.85:contrast=1.10,colorbalance=bs=0.10:bm=0.05,curves=master='0/0.06 0.5/0.48 1/0.92',noise=alls=20:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22,vignette=PI/4.2",
+    "05_vhs_sunburnt_87": "scale=690:497:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=6:cp=1,format=rgb24,rgbashift=rh=-3:bh=2,colorbalance=rh=0.10:bh=-0.10:rm=0.06,curves=master='0/0.08 0.5/0.53 1/0.93',eq=saturation=1.18:contrast=1.05,noise=alls=11:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "06_crt_phosphor_heavy": "rgbashift=rh=-2:bh=2,eq=contrast=1.18:saturation=1.22,split[__a][__b];[__b]gblur=sigma=9[__gl];[__a][__gl]blend=all_mode=screen:all_opacity=0.32,drawgrid=w=1053:h=2:t=1:c=black@0.30,noise=alls=11:allf=t+u,vignette=PI/4.5",
+    "07_vhs_chroma_bleed": "scale=690:497:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=10:cp=1,format=rgb24,rgbashift=rh=-6:bh=6,curves=master='0/0.07 0.5/0.51 1/0.94',eq=saturation=1.15,noise=alls=11:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "08_tape_damage_glitch": "scale=520:374:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=6:cp=1,format=rgb24,rgbashift=rh=-5:bh=5:rv=2,curves=master='0/0.11 0.5/0.49 1/0.88',eq=saturation=0.78,noise=alls=26:allf=t+u,drawgrid=w=1053:h=2:t=1:c=black@0.30",
+    "09_betacam_broadcast": "eq=contrast=1.16:saturation=1.25,unsharp=7:7:1.6,noise=alls=11:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "10_minidv_diary_2001": "unsharp=9:9:2.2,eq=contrast=1.10:saturation=1.12:brightness=0.01,colorbalance=bs=0.05,noise=alls=11:allf=t+u",
+    "11_security_cam_bw": "scale=690:497:flags=bilinear,scale=1053:758:flags=bilinear,hue=s=0,eq=contrast=1.20:brightness=0.02,noise=alls=20:allf=t+u,drawgrid=w=1053:h=2:t=1:c=black@0.30,vignette=PI/4.5",
+    "12_disposable_flash_99": "curves=master='0/0.03 0.3/0.24 0.7/0.80 1/1',eq=contrast=1.20:saturation=1.15:brightness=0.03,colorbalance=rh=0.06,noise=alls=11:allf=t+u,vignette=PI/4",
+    "13_polaroid_faded_sun": "curves=master='0/0.14 0.5/0.55 1/0.88',eq=saturation=0.68:contrast=0.94:brightness=0.04,colorbalance=rh=0.08:bh=-0.08,split[__a][__b];[__b]gblur=sigma=9[__gl];[__a][__gl]blend=all_mode=screen:all_opacity=0.32,noise=alls=11:allf=t+u",
+    "14_lomo_y2k_pop": "rgbashift=rh=-2:bh=2,eq=saturation=1.45:contrast=1.22,vignette=PI/3.6,noise=alls=11:allf=t+u,unsharp=5:5:1.0",
+    "15_webcam_msn_2003": "scale=400:288:flags=bilinear,scale=1053:758:flags=bicubic,eq=contrast=1.10:saturation=1.05:brightness=0.03,noise=alls=8:allf=t+u,unsharp=5:5:1.4",
+    "16_dv_oversharp_halo": "unsharp=9:9:3.2,eq=contrast=1.12:saturation=1.18,noise=alls=11:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "17_vhs_glitch_pink": "scale=690:497:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=6:cp=1,format=rgb24,rgbashift=rh=-5:bh=5,colorbalance=rm=0.12:bm=0.08:gm=-0.04,curves=master='0/0.09 0.5/0.52 1/0.93',eq=saturation=1.10,noise=alls=11:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "18_cinema_bleach_grit": "eq=saturation=0.55:contrast=1.35:brightness=-0.01,curves=master='0/0.04 0.5/0.48 1/0.97',noise=alls=20:allf=t+u,vignette=PI/4.5",
+    "19_teal_orange_retro": "colorbalance=bs=0.12:gs=0.05:rs=-0.08:rh=0.10:bh=-0.10,eq=saturation=1.15:contrast=1.12,noise=alls=11:allf=t+u,vignette=PI/4.5,drawgrid=w=1053:h=3:t=1:c=black@0.22",
+    "20_vcr_pause_still": "scale=520:374:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=6:cp=1,format=rgb24,gblur=sigma=0.8:sigmaV=2.2,rgbashift=rh=-4:bh=4,curves=master='0/0.10 0.5/0.50 1/0.90',eq=saturation=0.85,noise=alls=24:allf=t+u,drawgrid=w=1053:h=2:t=1:c=black@0.30",
+}
+
+# PNG overlay assets composited over the filtered image (before the player frame)
+RETROGRAD_OVERLAYS = {
+    "21_vhs_true_1988": ["vhs_bandnoise.png", "vhs_streaks.png"],
+}
+
+# VHS filters with per-row displacement (interlace jitter + bottom tracking tear),
+# applied between a pre-chain (look) and a post-chain (noise/scanlines/vignette)
+RETROGRAD_DISPLACE = {
+    "21_vhs_true_1988": {
+        "pre": "scale=480:346:flags=bilinear,scale=1053:758:flags=bilinear,format=yuv420p,boxblur=lr=0:lp=0:cr=8:cp=1,format=rgb24,rgbashift=rh=-3:bh=3,curves=master='0/0.07 0.5/0.56 0.85/0.96 1/1',eq=saturation=1.35:contrast=1.08:brightness=0.05,colorbalance=rh=0.08:bh=-0.12:rm=0.05:bm=-0.05,colorchannelmixer=rr=1.0:gg=1.0:bb=0.90:bg=0.10,gblur=sigma=0.70,split[ba][bb];[bb]gblur=sigma=10[bg2];[ba][bg2]blend=all_mode=screen:all_opacity=0.22",
+        "post": "unsharp=5:5:0.9,noise=alls=13:allf=t+u,drawgrid=w=1053:h=3:t=1:c=black@0.18,vignette=PI/5.36",
+        "maps": ["vhs_xmap.png", "vhs_ymap.png"],
+    },
 }
 
 @app.post("/retrograd/process")
@@ -610,17 +625,50 @@ def process_retrograd_image(request: RetrogradProcessRequest, authorization: str
 
         flt = RETROGRAD_FILTERS.get(request.filterId, None)
 
-        if flt is None:
-            fc = f"[0:v]{base_framing}[framed];color=c=black:s=1080x1080[bg];[bg][framed]overlay={hole_x}:{hole_y}[stage1];[stage1][1:v]overlay=0:0"
-        elif "split" in flt:
-            fc = f"[0:v]{base_framing}[framed];[framed]{flt}[filtered];color=c=black:s=1080x1080[bg];[bg][filtered]overlay={hole_x}:{hole_y}[stage1];[stage1][1:v]overlay=0:0"
-        else:
-            fc = f"[0:v]{base_framing},{flt}[filtered];color=c=black:s=1080x1080[bg];[bg][filtered]overlay={hole_x}:{hole_y}[stage1];[stage1][1:v]overlay=0:0"
+        # PNG overlay assets (tape-damage streaks, VCR timestamp) composited
+        # over the filtered image, before the media player frame
+        overlay_names = RETROGRAD_OVERLAYS.get(request.filterId, [])
+        overlay_paths = []
+        for name in overlay_names:
+            p = os.path.join(os.path.dirname(__file__), name)
+            if os.path.exists(p):
+                overlay_paths.append(p)
+            else:
+                print(f"Warning: overlay asset {name} missing, skipping.")
 
-        cmd = [
-            "ffmpeg", "-y",
-            "-i", temp_user_path,
-            "-i", frame_path,
+        disp_cfg = RETROGRAD_DISPLACE.get(request.filterId)
+        map_paths = []
+        if disp_cfg:
+            map_paths = [os.path.join(os.path.dirname(__file__), m) for m in disp_cfg["maps"]]
+            if all(os.path.exists(m) for m in map_paths):
+                head = (f"[0:v]{base_framing},{disp_cfg['pre']},format=rgb24[pre];"
+                        f"[pre][2:v][3:v]displace=edge=smear[dispd];"
+                        f"[dispd]{disp_cfg['post']}[s0]")
+            else:
+                print("Warning: displacement maps missing, rendering without displace.")
+                map_paths = []
+                head = f"[0:v]{base_framing},{disp_cfg['pre']},{disp_cfg['post']}[s0]"
+        elif flt is None:
+            head = f"[0:v]{base_framing}[s0]"
+        elif "split" in flt:
+            head = f"[0:v]{base_framing}[framed];[framed]{flt}[s0]"
+        else:
+            head = f"[0:v]{base_framing},{flt}[s0]"
+
+        overlay_input_start = 2 + len(map_paths)
+        parts = [head]
+        cur = "s0"
+        for i in range(len(overlay_paths)):
+            nxt = f"s{i + 1}"
+            parts.append(f"[{cur}][{overlay_input_start + i}:v]overlay=0:0[{nxt}]")
+            cur = nxt
+        parts.append(f"color=c=black:s=1080x1080[bg];[bg][{cur}]overlay={hole_x}:{hole_y}[stage1];[stage1][1:v]overlay=0:0")
+        fc = ";".join(parts)
+
+        cmd = ["ffmpeg", "-y", "-i", temp_user_path, "-i", frame_path]
+        for p in map_paths + overlay_paths:
+            cmd += ["-i", p]
+        cmd += [
             "-filter_complex", fc,
             "-quality", str(request.quality),
             "-frames:v", "1",
