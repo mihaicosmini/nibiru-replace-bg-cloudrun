@@ -445,3 +445,124 @@ def process_image(request: ProcessRequest, authorization: str = Header(None)):
     out_io.seek(0)
     
     return Response(content=out_io.getvalue(), media_type="image/webp")
+
+
+# ==========================================
+# RETROGRADE FESTIVAL - RETRO MEDIA PLAYER
+# ==========================================
+
+import subprocess
+import tempfile
+
+class RetrogradProcessRequest(BaseModel):
+    imageUrl: str
+    filterId: str = "00_original_no_filter"
+    quality: int = 95
+
+RETROGRAD_FILTERS = {
+    "00_original_no_filter": None,
+    "01_xenon_flash_crisp": "unsharp=5:5:1.2:3:3:0.0,eq=contrast=1.12:saturation=1.15:brightness=0.02",
+    "02_subtle_crt_phosphor": "eq=contrast=1.14:saturation=1.18,drawgrid=w=1053:h=3:t=1:c=black@0.15,unsharp=5:5:0.9",
+    "03_panasonic_lumix_leica": "eq=contrast=1.20:saturation=1.15,unsharp=7:7:1.3:3:3:0.0",
+    "04_soft_flash_glamour": "split[a][b];[b]gblur=sigma=5,eq=brightness=0.04[gl];[a][gl]blend=all_mode=lighten:all_opacity=0.25,eq=contrast=1.12:saturation=1.16,unsharp=3:3:0.7",
+    "05_party_flash_vignette": "eq=contrast=1.18:saturation=1.22:brightness=0.02,vignette=PI/5,unsharp=5:5:1.0",
+    "06_webcam_ccd_nostalgia": "scale=640:480,scale=1053:758:flags=bicubic,eq=contrast=1.15:saturation=1.16,unsharp=5:5:1.3",
+    "07_sony_cybershot_2004": "eq=contrast=1.16:saturation=1.22:brightness=0.01,unsharp=7:7:1.0:3:3:0.0",
+    "08_minidv_clean_tape": "eq=contrast=1.12:saturation=1.16:brightness=0.01,noise=alls=4:allf=t+u,unsharp=5:5:1.0",
+    "09_canon_powershot_g3": "curves=master='0/0 0.25/0.22 0.75/0.82 1/1',eq=contrast=1.10:saturation=1.18,unsharp=5:5:0.8",
+    "10_early_digicam_vivid": "eq=contrast=1.20:saturation=1.28:brightness=0.02,unsharp=5:5:1.4",
+    "11_direct_flash_pop": "curves=master='0/0.02 0.3/0.26 0.7/0.78 1/1',eq=contrast=1.15:saturation=1.12:brightness=0.03,unsharp=3:3:0.9",
+    "12_clean_digital_480p": "scale=702:505,scale=1053:758:flags=lanczos,eq=contrast=1.14:saturation=1.18,unsharp=5:5:1.5",
+    "13_casio_exilim_color_pop": "eq=contrast=1.18:saturation=1.32,unsharp=5:5:1.0",
+    "14_olympus_camedia_crisp": "curves=master='0/0 0.5/0.52 1/1',eq=contrast=1.12:saturation=1.15,unsharp=7:7:1.2",
+    "15_flash_contrast_boost": "eq=contrast=1.22:brightness=-0.01:saturation=1.20,unsharp=5:5:1.1",
+    "16_kodak_easyshare_digital": "curves=master='0/0 0.25/0.24 0.75/0.80 1/1',eq=contrast=1.15:saturation=1.25,unsharp=3:3:0.8",
+    "17_nikon_coolpix_2003": "eq=contrast=1.14:saturation=1.12:brightness=0.01,curves=master='0/0 0.5/0.51 1/0.99',unsharp=5:5:1.0",
+    "18_fujifilm_finepix_superccd": "curves=master='0/0.01 0.25/0.23 0.75/0.83 1/1',eq=contrast=1.15:saturation=1.24,unsharp=5:5:1.1",
+    "19_direct_flash_high_key": "curves=master='0/0.03 0.3/0.32 0.7/0.84 1/1',eq=contrast=1.12:saturation=1.14:brightness=0.02,unsharp=3:3:0.8",
+    "20_y2k_cyber_clean": "colorchannelmixer=rr=1.02:gg=1.0:bb=1.04,eq=contrast=1.16:saturation=1.20:brightness=0.01,unsharp=5:5:1.2",
+}
+
+@app.post("/retrograd/process")
+def process_retrograd_image(request: RetrogradProcessRequest, authorization: str = Header(None)):
+    if API_BEARER_TOKEN:
+        if not authorization or authorization != f"Bearer {API_BEARER_TOKEN}":
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+    frame_path = os.path.join(os.path.dirname(__file__), "Mediaplayer2.png")
+    if not os.path.exists(frame_path):
+        frame_url = "https://beachpleaseapp.b-cdn.net/miss-galaxia/Mediaplayer2.png"
+        try:
+            r = requests.get(frame_url, timeout=15)
+            if r.status_code == 200:
+                with open(frame_path, "wb") as f:
+                    f.write(r.content)
+            else:
+                raise HTTPException(status_code=500, detail="Failed to download Mediaplayer2.png template")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error getting frame: {str(e)}")
+
+    try:
+        res = requests.get(request.imageUrl, timeout=20)
+        if res.status_code != 200:
+            raise HTTPException(status_code=400, detail=f"Failed to fetch user image: status {res.status_code}")
+        user_img_bytes = res.content
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error fetching user image: {str(e)}")
+
+    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as temp_user_file, \
+         tempfile.NamedTemporaryFile(suffix=".webp", delete=False) as temp_out_file:
+        temp_user_path = temp_user_file.name
+        temp_out_path = temp_out_file.name
+        temp_user_file.write(user_img_bytes)
+
+    try:
+        with Image.open(temp_user_path) as u_img:
+            u_w, u_h = u_img.size
+            ar_user = u_w / u_h
+
+        hole_x = 16
+        hole_y = 172
+        hole_w = 1053
+        hole_h = 758
+        ar_hole = hole_w / hole_h
+
+        if ar_user < ar_hole:
+            base_framing = f"scale={hole_w}:-1,crop={hole_w}:{hole_h}:0:'(in_h-out_h)*0.18'"
+        else:
+            base_framing = f"scale=-1:{hole_h},crop={hole_w}:{hole_h}:'(in_w-out_w)/2':0"
+
+        flt = RETROGRAD_FILTERS.get(request.filterId, None)
+
+        if flt is None:
+            fc = f"[0:v]{base_framing}[framed];color=c=black:s=1080x1080[bg];[bg][framed]overlay={hole_x}:{hole_y}[stage1];[stage1][1:v]overlay=0:0"
+        elif "split" in flt:
+            fc = f"[0:v]{base_framing}[framed];[framed]{flt}[filtered];color=c=black:s=1080x1080[bg];[bg][filtered]overlay={hole_x}:{hole_y}[stage1];[stage1][1:v]overlay=0:0"
+        else:
+            fc = f"[0:v]{base_framing},{flt}[filtered];color=c=black:s=1080x1080[bg];[bg][filtered]overlay={hole_x}:{hole_y}[stage1];[stage1][1:v]overlay=0:0"
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", temp_user_path,
+            "-i", frame_path,
+            "-filter_complex", fc,
+            "-quality", str(request.quality),
+            "-frames:v", "1",
+            temp_out_path
+        ]
+
+        p = subprocess.run(cmd, capture_output=True, text=True)
+        if p.returncode != 0:
+            raise HTTPException(status_code=500, detail=f"FFmpeg rendering failed: {p.stderr[-400:]}")
+
+        with open(temp_out_path, "rb") as f:
+            out_bytes = f.read()
+
+        return Response(content=out_bytes, media_type="image/webp")
+
+    finally:
+        if os.path.exists(temp_user_path):
+            os.remove(temp_user_path)
+        if os.path.exists(temp_out_path):
+            os.remove(temp_out_path)
+
