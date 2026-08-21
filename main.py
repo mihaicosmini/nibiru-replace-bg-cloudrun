@@ -489,16 +489,16 @@ def process_retrograd_image(request: RetrogradProcessRequest, authorization: str
         if not authorization or authorization != f"Bearer {API_BEARER_TOKEN}":
             raise HTTPException(status_code=401, detail="Unauthorized")
 
-    frame_path = os.path.join(os.path.dirname(__file__), "Mediaplayer2.png")
+    frame_path = "/tmp/Mediaplayer2.png"
     if not os.path.exists(frame_path):
-        frame_url = "https://beachpleaseapp.b-cdn.net/miss-galaxia/Mediaplayer2.png"
+        frame_url = "https://beachpleaseapp.b-cdn.net/retrograd/Mediaplayer2.png"
         try:
             r = requests.get(frame_url, timeout=15)
             if r.status_code == 200:
                 with open(frame_path, "wb") as f:
                     f.write(r.content)
             else:
-                raise HTTPException(status_code=500, detail="Failed to download Mediaplayer2.png template")
+                raise HTTPException(status_code=500, detail="Failed to download Mediaplayer2.png template from BunnyCDN")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error getting frame: {str(e)}")
 
