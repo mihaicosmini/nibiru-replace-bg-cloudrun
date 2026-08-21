@@ -517,20 +517,96 @@ def process_retrograd_image(request: RetrogradProcessRequest, authorization: str
         temp_user_file.write(user_img_bytes)
 
     try:
-        with Image.open(temp_user_path) as u_img:
-            u_w, u_h = u_img.size
-            ar_user = u_w / u_h
+        # Smart framing with YuNet DNN face detection (handles sunglasses, profiles,
+        # small faces — the old Haar cascade produced false positives in clouds/textures)
+        def get_yunet_model_path():
+            local_path = os.path.join(os.path.dirname(__file__), "face_detection_yunet_2023mar.onnx")
+            if os.path.exists(local_path):
+                return local_path
+            tmp_path = "/tmp/face_detection_yunet_2023mar.onnx"
+            if os.path.exists(tmp_path):
+                return tmp_path
+            model_url = "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
+            r = requests.get(model_url, timeout=15)
+            if r.status_code == 200:
+                with open(tmp_path, "wb") as f:
+                    f.write(r.content)
+                return tmp_path
+            raise Exception(f"Failed to download YuNet model: status {r.status_code}")
+
+        def detect_faces_yunet(img):
+            """Returns list of (x, y, w, h, conf) in original image coords."""
+            import cv2
+            h, w = img.shape[:2]
+            det_scale = 1.0
+            if max(h, w) > 1600:
+                det_scale = 1600.0 / max(h, w)
+                det_img = cv2.resize(img, (int(round(w * det_scale)), int(round(h * det_scale))))
+            else:
+                det_img = img
+            dh, dw = det_img.shape[:2]
+            fd = cv2.FaceDetectorYN.create(get_yunet_model_path(), "", (dw, dh), score_threshold=0.65)
+            _, faces = fd.detect(det_img)
+            if faces is None:
+                return []
+            return [(f[0] / det_scale, f[1] / det_scale, f[2] / det_scale, f[3] / det_scale, float(f[14])) for f in faces]
+
+        def get_smart_framing(img_path, target_w=1053, target_h=758):
+            try:
+                import cv2
+                img = cv2.imread(img_path)
+                if img is None:
+                    raise Exception("Cannot read image")
+                h, w = img.shape[:2]
+
+                scale = max(target_w / w, target_h / h)
+                scaled_w = int(round(w * scale))
+                scaled_h = int(round(h * scale))
+
+                faces = []
+                try:
+                    faces = detect_faces_yunet(img)
+                except Exception as det_err:
+                    print(f"YuNet detection failed, using positional fallback: {det_err}")
+
+                if faces:
+                    # Keep the main subject group: ignore background bystanders
+                    # (faces smaller than 30% of the largest face's area)
+                    main_area = max(f[2] * f[3] for f in faces)
+                    group = [f for f in faces if f[2] * f[3] >= 0.30 * main_area]
+
+                    min_x = min(f[0] for f in group) * scale
+                    max_x = max(f[0] + f[2] for f in group) * scale
+                    min_y = min(f[1] for f in group) * scale
+                    max_y = max(f[1] + f[3] for f in group) * scale
+                    group_h = max_y - min_y
+
+                    crop_x = (min_x + max_x) / 2.0 - target_w / 2.0
+                    # Face group center at 40% of hole height, but never crop the
+                    # forehead: keep headroom of 60% of group height above the top face
+                    crop_y = (min_y + max_y) / 2.0 - target_h * 0.40
+                    crop_y = min(crop_y, min_y - 0.60 * group_h)
+                    print(f"Face framing: {len(group)}/{len(faces)} faces kept")
+                else:
+                    crop_x = (scaled_w - target_w) / 2.0
+                    # Portraits usually have the subject in the upper part
+                    crop_y = (scaled_h - target_h) * (0.25 if h > w else 0.45)
+                    print("No faces detected, positional fallback")
+
+                crop_x = int(round(max(0, min(scaled_w - target_w, crop_x))))
+                crop_y = int(round(max(0, min(scaled_h - target_h, crop_y))))
+
+                return f"scale={scaled_w}:{scaled_h},crop={target_w}:{target_h}:{crop_x}:{crop_y}"
+            except Exception as e:
+                print(f"Smart crop fallback: {e}")
+                return f"scale={target_w}:-1,crop={target_w}:{target_h}:0:'(in_h-out_h)/2'"
 
         hole_x = 16
         hole_y = 172
         hole_w = 1053
         hole_h = 758
-        ar_hole = hole_w / hole_h
 
-        if ar_user < ar_hole:
-            base_framing = f"scale={hole_w}:-1,crop={hole_w}:{hole_h}:0:'(in_h-out_h)*0.18'"
-        else:
-            base_framing = f"scale=-1:{hole_h},crop={hole_w}:{hole_h}:'(in_w-out_w)/2':0"
+        base_framing = get_smart_framing(temp_user_path, hole_w, hole_h)
 
         flt = RETROGRAD_FILTERS.get(request.filterId, None)
 
